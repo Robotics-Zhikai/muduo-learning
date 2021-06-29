@@ -17,7 +17,7 @@
 using namespace muduo;
 
 static_assert(sizeof(Timestamp) == sizeof(int64_t),
-              "Timestamp should be same size as int64_t");
+              "Timestamp should be same size as int64_t"); //编译时断言 区别于assert这种运行时检测
 
 string Timestamp::toString() const
 {
@@ -33,7 +33,7 @@ string Timestamp::toFormattedString(bool showMicroseconds) const
   char buf[64] = {0};
   time_t seconds = static_cast<time_t>(microSecondsSinceEpoch_ / kMicroSecondsPerSecond);
   struct tm tm_time;
-  gmtime_r(&seconds, &tm_time);
+  gmtime_r(&seconds, &tm_time); //加上r表示是一个线程安全的函数
 
   if (showMicroseconds)
   {

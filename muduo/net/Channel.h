@@ -30,17 +30,17 @@ class EventLoop;
 /// This class doesn't own the file descriptor.
 /// The file descriptor could be a socket,
 /// an eventfd, a timerfd, or a signalfd
-class Channel : noncopyable
+class Channel : noncopyable //不可拷贝
 {
  public:
   typedef std::function<void()> EventCallback;
   typedef std::function<void(Timestamp)> ReadEventCallback;
 
-  Channel(EventLoop* loop, int fd);
+  Channel(EventLoop* loop, int fd); //构造函数 一个eventloop包含多个channel，但是一个channel只能有一个eventloop
   ~Channel();
 
   void handleEvent(Timestamp receiveTime);
-  void setReadCallback(ReadEventCallback cb)
+  void setReadCallback(ReadEventCallback cb) //回调函数的设置
   { readCallback_ = std::move(cb); }
   void setWriteCallback(EventCallback cb)
   { writeCallback_ = std::move(cb); }
@@ -53,7 +53,7 @@ class Channel : noncopyable
   /// prevent the owner object being destroyed in handleEvent.
   void tie(const std::shared_ptr<void>&);
 
-  int fd() const { return fd_; }
+  int fd() const { return fd_; } //channel对应的文件描述符
   int events() const { return events_; }
   void set_revents(int revt) { revents_ = revt; } // used by pollers
   // int revents() const { return revents_; }
@@ -63,7 +63,7 @@ class Channel : noncopyable
   void disableReading() { events_ &= ~kReadEvent; update(); }
   void enableWriting() { events_ |= kWriteEvent; update(); }
   void disableWriting() { events_ &= ~kWriteEvent; update(); }
-  void disableAll() { events_ = kNoneEvent; update(); }
+  void disableAll() { events_ = kNoneEvent; update(); } //不关注任何事件
   bool isWriting() const { return events_ & kWriteEvent; }
   bool isReading() const { return events_ & kReadEvent; }
 
@@ -90,16 +90,16 @@ class Channel : noncopyable
   static const int kReadEvent;
   static const int kWriteEvent;
 
-  EventLoop* loop_;
+  EventLoop* loop_; //记录所属eventloop
   const int  fd_;
-  int        events_;
-  int        revents_; // it's the received event types of epoll or poll
-  int        index_; // used by Poller.
-  bool       logHup_;
+  int        events_; //关注的事件
+  int        revents_; // it's the received event types of epoll or poll 实际返回的事件
+  int        index_; // used by Poller. poll函数的第一个参数pollfd数组的索引index
+  bool       logHup_; //发生挂起
 
   std::weak_ptr<void> tie_;
   bool tied_;
-  bool eventHandling_;
+  bool eventHandling_; //是否处于处理事件中
   bool addedToLoop_;
   ReadEventCallback readCallback_;
   EventCallback writeCallback_;

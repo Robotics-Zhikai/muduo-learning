@@ -28,7 +28,7 @@ class Channel;
 /// Base class for IO Multiplexing
 ///
 /// This class doesn't own the Channel objects.
-class Poller : noncopyable
+class Poller : noncopyable //是对I/O复用的抽象
 {
  public:
   typedef std::vector<Channel*> ChannelList;
@@ -58,11 +58,11 @@ class Poller : noncopyable
   }
 
  protected:
-  typedef std::map<int, Channel*> ChannelMap;
+  typedef std::map<int, Channel*> ChannelMap; //fd到channel的映射
   ChannelMap channels_;
 
  private:
-  EventLoop* ownerLoop_;
+  EventLoop* ownerLoop_; //poller所属eventloop 一个eventloop包含一个poller，那么poller也会登记其所属的eventloop
 };
 
 }  // namespace net

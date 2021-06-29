@@ -61,8 +61,9 @@ EventLoop* EventLoop::getEventLoopOfCurrentThread()
   return t_loopInThisThread;
 }
 
+
 EventLoop::EventLoop()
-  : looping_(false),
+  : looping_(false),  /*初始时looping为false，代表不循环*/
     quit_(false),
     eventHandling_(false),
     callingPendingFunctors_(false),
@@ -75,7 +76,8 @@ EventLoop::EventLoop()
     currentActiveChannel_(NULL)
 {
   LOG_DEBUG << "EventLoop created " << this << " in thread " << threadId_;
-  if (t_loopInThisThread)
+  if (t_loopInThisThread) 
+  //检查当前线程是否只创建了一个eventloop对象，如果已经创建了一个然后又要创建一个的话就终止程序
   {
     LOG_FATAL << "Another EventLoop " << t_loopInThisThread
               << " exists in this thread " << threadId_;
@@ -97,9 +99,11 @@ EventLoop::~EventLoop()
   wakeupChannel_->disableAll();
   wakeupChannel_->remove();
   ::close(wakeupFd_);
-  t_loopInThisThread = NULL;
+  t_loopInThisThread = NULL; //这个置空
 }
 
+//不能跨线程调用，
+//比如用全局变量定义了一个EventLoop的指针然后在主线程对该指针进行了赋值，并在另一个线程通过该指针调用loop，就会直接报错
 void EventLoop::loop()
 {
   assert(!looping_);
@@ -108,23 +112,25 @@ void EventLoop::loop()
   quit_ = false;  // FIXME: what if someone calls quit() before loop() ?
   LOG_TRACE << "EventLoop " << this << " start looping";
 
+  //这个while是loop的核心
   while (!quit_)
   {
     activeChannels_.clear();
-    pollReturnTime_ = poller_->poll(kPollTimeMs, &activeChannels_);
+    pollReturnTime_ = poller_->poll(kPollTimeMs, &activeChannels_); 
+    //会把就绪的队列放到活动的channels中
     ++iteration_;
     if (Logger::logLevel() <= Logger::TRACE)
     {
-      printActiveChannels();
+      printActiveChannels(); //打印日志的
     }
     // TODO sort channel by priority
     eventHandling_ = true;
     for (Channel* channel : activeChannels_)
     {
       currentActiveChannel_ = channel;
-      currentActiveChannel_->handleEvent(pollReturnTime_);
+      currentActiveChannel_->handleEvent(pollReturnTime_); //调用handleevent判断是什么样的就绪事件，然后调用相应的回调函数
     }
-    currentActiveChannel_ = NULL;
+    currentActiveChannel_ = NULL; //当前没有活跃的channel了
     eventHandling_ = false;
     doPendingFunctors();
   }
@@ -200,8 +206,8 @@ void EventLoop::cancel(TimerId timerId)
 
 void EventLoop::updateChannel(Channel* channel)
 {
-  assert(channel->ownerLoop() == this);
-  assertInLoopThread();
+  assert(channel->ownerLoop() == this); //eventloop只能更新和自己的eventloop一样的channel
+  assertInLoopThread(); //一个线程只能有一个eventloop
   poller_->updateChannel(channel);
 }
 

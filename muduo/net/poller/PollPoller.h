@@ -40,7 +40,8 @@ class PollPoller : public Poller
   void fillActiveChannels(int numEvents,
                           ChannelList* activeChannels) const;
 
-  typedef std::vector<struct pollfd> PollFdList;
+  typedef std::vector<struct pollfd> PollFdList; //UNP上6.10节有讲pollfd的作用 或者直接man poll
+  //上边这个用vector来代表数组
   PollFdList pollfds_;
 };
 

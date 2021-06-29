@@ -33,7 +33,7 @@ class Poller;
 class TimerQueue;
 
 ///
-/// Reactor, at most one per thread.
+/// Reactor, at most one per thread. reactor的封装
 ///
 /// This is an interface class, so don't expose too much details.
 class EventLoop : noncopyable
@@ -47,7 +47,7 @@ class EventLoop : noncopyable
   ///
   /// Loops forever.
   ///
-  /// Must be called in the same thread as creation of the object.
+  /// Must be called in the same thread as creation of the object. 只能在相同的线程中调用
   ///
   void loop();
 
@@ -101,8 +101,8 @@ class EventLoop : noncopyable
 
   // internal usage
   void wakeup();
-  void updateChannel(Channel* channel);
-  void removeChannel(Channel* channel);
+  void updateChannel(Channel* channel); //在poller中添加或更新通道
+  void removeChannel(Channel* channel); //从poller中移除通道
   bool hasChannel(Channel* channel);
 
   // pid_t threadId() const { return threadId_; }
@@ -137,13 +137,13 @@ class EventLoop : noncopyable
 
   typedef std::vector<Channel*> ChannelList;
 
-  bool looping_; /* atomic */
-  std::atomic<bool> quit_;
+  bool looping_; /* atomic */ //是否属于循环状态
+  std::atomic<bool> quit_; //是否退出loop
   bool eventHandling_; /* atomic */
   bool callingPendingFunctors_; /* atomic */
   int64_t iteration_;
-  const pid_t threadId_;
-  Timestamp pollReturnTime_;
+  const pid_t threadId_; //当前对象所属线程ID
+  Timestamp pollReturnTime_; //调用poll函数所返回的时间戳 
   std::unique_ptr<Poller> poller_;
   std::unique_ptr<TimerQueue> timerQueue_;
   int wakeupFd_;
@@ -153,8 +153,8 @@ class EventLoop : noncopyable
   boost::any context_;
 
   // scratch variables
-  ChannelList activeChannels_;
-  Channel* currentActiveChannel_;
+  ChannelList activeChannels_; //poller返回的活动通道，就是已经就绪的文件所对应的channel列表
+  Channel* currentActiveChannel_; //当前正在处理的活动通道
 
   mutable MutexLock mutex_;
   std::vector<Functor> pendingFunctors_ GUARDED_BY(mutex_);

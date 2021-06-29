@@ -18,8 +18,8 @@ using namespace muduo;
 using namespace muduo::net;
 
 const int Channel::kNoneEvent = 0;
-const int Channel::kReadEvent = POLLIN | POLLPRI;
-const int Channel::kWriteEvent = POLLOUT;
+const int Channel::kReadEvent = POLLIN | POLLPRI; //普通或优先级数据可读 或者带外数据（紧急数据）可读
+const int Channel::kWriteEvent = POLLOUT; //普通数据可写
 
 Channel::Channel(EventLoop* loop, int fd__)
   : loop_(loop),
@@ -63,9 +63,9 @@ void Channel::remove()
   loop_->removeChannel(this);
 }
 
-void Channel::handleEvent(Timestamp receiveTime)
+void Channel::handleEvent(Timestamp receiveTime)//当事件到来时会调用handleEvent
 {
-  std::shared_ptr<void> guard;
+  std::shared_ptr<void> guard; //多余的代码是生存期的控制，就暂且认为是调用的handleEventWithGuard
   if (tied_)
   {
     guard = tie_.lock();
@@ -93,20 +93,20 @@ void Channel::handleEventWithGuard(Timestamp receiveTime)
     if (closeCallback_) closeCallback_();
   }
 
-  if (revents_ & POLLNVAL)
+  if (revents_ & POLLNVAL) //不是一个合法的文件描述符
   {
-    LOG_WARN << "fd = " << fd_ << " Channel::handle_event() POLLNVAL";
+    LOG_WARN << "fd = " << fd_ << " Channel::handle_event() POLLNVAL"; //只是做一个日志的记录，没有直接退出去，因为要保证7*24不间断工作
   }
 
   if (revents_ & (POLLERR | POLLNVAL))
   {
     if (errorCallback_) errorCallback_();
   }
-  if (revents_ & (POLLIN | POLLPRI | POLLRDHUP))
+  if (revents_ & (POLLIN | POLLPRI | POLLRDHUP)) //认为是可读事件，回调readCallback
   {
     if (readCallback_) readCallback_(receiveTime);
   }
-  if (revents_ & POLLOUT)
+  if (revents_ & POLLOUT) //可写事件产生
   {
     if (writeCallback_) writeCallback_();
   }
@@ -123,7 +123,7 @@ string Channel::eventsToString() const
   return eventsToString(fd_, events_);
 }
 
-string Channel::eventsToString(int fd, int ev)
+string Channel::eventsToString(int fd, int ev) //这个是用来调试的
 {
   std::ostringstream oss;
   oss << fd << ": ";

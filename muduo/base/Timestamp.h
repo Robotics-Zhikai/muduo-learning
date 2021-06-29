@@ -20,9 +20,9 @@ namespace muduo
 /// This class is immutable.
 /// It's recommended to pass it by value, since it's passed in register on x64.
 ///
-class Timestamp : public muduo::copyable,
+class Timestamp : public muduo::copyable, //值语义
                   public boost::equality_comparable<Timestamp>,
-                  public boost::less_than_comparable<Timestamp>
+                  public boost::less_than_comparable<Timestamp> //要求实现小于号，然后就自动实现了< <= >= 是一种模板元编程
 {
  public:
   ///
@@ -44,7 +44,7 @@ class Timestamp : public muduo::copyable,
 
   void swap(Timestamp& that)
   {
-    std::swap(microSecondsSinceEpoch_, that.microSecondsSinceEpoch_);
+    std::swap(microSecondsSinceEpoch_, that.microSecondsSinceEpoch_); //引用参数传递
   }
 
   // default copy/assignment/dtor are Okay
@@ -81,7 +81,7 @@ class Timestamp : public muduo::copyable,
   static const int kMicroSecondsPerSecond = 1000 * 1000;
 
  private:
-  int64_t microSecondsSinceEpoch_;
+  int64_t microSecondsSinceEpoch_; //表示流过的时间 距离时间的初始点1970-01-01 00：00：00 的时间 以微秒来表示
 };
 
 inline bool operator<(Timestamp lhs, Timestamp rhs)
@@ -101,7 +101,7 @@ inline bool operator==(Timestamp lhs, Timestamp rhs)
 /// @return (high-low) in seconds
 /// @c double has 52-bit precision, enough for one-microsecond
 /// resolution for next 100 years.
-inline double timeDifference(Timestamp high, Timestamp low)
+inline double timeDifference(Timestamp high, Timestamp low) //返回的是秒
 {
   int64_t diff = high.microSecondsSinceEpoch() - low.microSecondsSinceEpoch();
   return static_cast<double>(diff) / Timestamp::kMicroSecondsPerSecond;
