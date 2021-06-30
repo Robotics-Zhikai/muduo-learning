@@ -116,7 +116,7 @@ void EventLoop::loop()
   while (!quit_)
   {
     activeChannels_.clear();
-    pollReturnTime_ = poller_->poll(kPollTimeMs, &activeChannels_); 
+    pollReturnTime_ = poller_->poll(kPollTimeMs, &activeChannels_); //如果这个调用失败，那么activeChannels仍为空，什么都不做
     //会把就绪的队列放到活动的channels中
     ++iteration_;
     if (Logger::logLevel() <= Logger::TRACE)
@@ -128,7 +128,8 @@ void EventLoop::loop()
     for (Channel* channel : activeChannels_)
     {
       currentActiveChannel_ = channel;
-      currentActiveChannel_->handleEvent(pollReturnTime_); //调用handleevent判断是什么样的就绪事件，然后调用相应的回调函数
+      currentActiveChannel_->handleEvent(pollReturnTime_); 
+      //调用handleevent判断是什么样的就绪事件，然后调用相应的回调函数
     }
     currentActiveChannel_ = NULL; //当前没有活跃的channel了
     eventHandling_ = false;

@@ -28,6 +28,7 @@ static_assert(EPOLLOUT == POLLOUT,      "epoll uses same flag values as poll");
 static_assert(EPOLLRDHUP == POLLRDHUP,  "epoll uses same flag values as poll");
 static_assert(EPOLLERR == POLLERR,      "epoll uses same flag values as poll");
 static_assert(EPOLLHUP == POLLHUP,      "epoll uses same flag values as poll");
+//上面所述的几个常量在Linux中应该是相同的，这些个条件应该在编译期就被检查
 
 namespace
 {
@@ -77,7 +78,7 @@ Timestamp EPollPoller::poll(int timeoutMs, ChannelList* activeChannels)
   else
   {
     // error happens, log uncommon ones
-    if (savedErrno != EINTR)
+    if (savedErrno != EINTR) //epoll_wait不是被中断的，输出错误代码 退出
     {
       errno = savedErrno;
       LOG_SYSERR << "EPollPoller::poll()";
@@ -174,7 +175,7 @@ void EPollPoller::update(int operation, Channel* channel)
   struct epoll_event event;
   memZero(&event, sizeof event);
   event.events = channel->events();
-  event.data.ptr = channel;
+  event.data.ptr = channel; //在这里更新union，把epoll_event中的epoll_data_t更新成指向channel的指针
   int fd = channel->fd();
   LOG_TRACE << "epoll_ctl op = " << operationToString(operation)
     << " fd = " << fd << " event = { " << channel->eventsToString() << " }";

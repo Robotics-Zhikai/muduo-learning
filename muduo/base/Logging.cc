@@ -51,19 +51,19 @@ Logger::LogLevel initLogLevel()
   else if (::getenv("MUDUO_LOG_DEBUG"))
     return Logger::DEBUG;
   else
-    return Logger::INFO;
+    return Logger::INFO; //默认应该是INFO级别的
 }
 
 Logger::LogLevel g_logLevel = initLogLevel();
 
 const char* LogLevelName[Logger::NUM_LOG_LEVELS] =
 {
-  "TRACE ",
-  "DEBUG ",
-  "INFO  ",
-  "WARN  ",
-  "ERROR ",
-  "FATAL ",
+  "TRACE ", /*指出比DEBUG粒度更细的一些信息时间*/
+  "DEBUG ", /*指出细粒度信息事件对调试应用程序是非常有帮助的*/
+  "INFO  ", /*表明信息在粗粒度级别上突出强调应用程序的运行过程*/
+  "WARN  ", /*系统能正常运行，但可能会出现潜在错误的情形*/
+  "ERROR ", /*指出虽然发生错误事件，但仍然不影响系统的继续运行*/
+  "FATAL ", /*指出每个严重的错误事件将会导致应用程序的退出*/
 };
 
 // helper class for known string length at compile time
@@ -93,9 +93,9 @@ inline LogStream& operator<<(LogStream& s, const Logger::SourceFile& v)
   return s;
 }
 
-void defaultOutput(const char* msg, int len)
+void defaultOutput(const char* msg, int len) //可以按照这个函数的形式自定义输出日志到其他未知，比如open一个文件
 {
-  size_t n = fwrite(msg, 1, len, stdout);
+  size_t n = fwrite(msg, 1, len, stdout); //默认输出到标准输出
   //FIXME check n
   (void)n;
 }
@@ -179,8 +179,8 @@ Logger::Logger(SourceFile file, int line)
 }
 
 Logger::Logger(SourceFile file, int line, LogLevel level, const char* func)
-  : impl_(level, 0, file, line)
-{
+  : impl_(level, 0, file, line) 
+{ //在impl构造的时候就把很多信息放到了stream_中
   impl_.stream_ << func << ' ';
 }
 
@@ -198,11 +198,11 @@ Logger::~Logger()
 {
   impl_.finish();
   const LogStream::Buffer& buf(stream().buffer());
-  g_output(buf.data(), buf.length());
-  if (impl_.level_ == FATAL)
+  g_output(buf.data(), buf.length()); //logger析构的时候把信息输出到特定的文件或者标准输出
+  if (impl_.level_ == FATAL) //在析构的时候会根据是否是FATAL级别的错误来决定是否退出程序
   {
     g_flush();
-    abort();
+    abort(); //程序退出
   }
 }
 
@@ -211,7 +211,7 @@ void Logger::setLogLevel(Logger::LogLevel level)
   g_logLevel = level;
 }
 
-void Logger::setOutput(OutputFunc out)
+void Logger::setOutput(OutputFunc out) //设置输出的路径
 {
   g_output = out;
 }

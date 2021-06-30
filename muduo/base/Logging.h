@@ -71,9 +71,9 @@ class Logger
   static LogLevel logLevel();
   static void setLogLevel(LogLevel level);
 
-  typedef void (*OutputFunc)(const char* msg, int len);
+  typedef void (*OutputFunc)(const char* msg, int len); //这是个函数指针类型
   typedef void (*FlushFunc)();
-  static void setOutput(OutputFunc);
+  static void setOutput(OutputFunc); //指定输出函数，日志输出在标准输出或其他地方 需要自定义一个OutputFunc函数
   static void setFlush(FlushFunc);
   static void setTimeZone(const TimeZone& tz);
 
@@ -121,8 +121,11 @@ inline Logger::LogLevel Logger::logLevel()
 //   else
 //     logWarnStream << "Bad news";
 //
+
+//当前日志级别如果是INFO的话，比INFO小的DEBUG和TRACE级别的日志都不会输出
+//看下边的if
 #define LOG_TRACE if (muduo::Logger::logLevel() <= muduo::Logger::TRACE) \
-  muduo::Logger(__FILE__, __LINE__, muduo::Logger::TRACE, __func__).stream()
+  muduo::Logger(__FILE__, __LINE__, muduo::Logger::TRACE, __func__).stream() //logger是匿名的，导致过了这行就会被析构掉
 #define LOG_DEBUG if (muduo::Logger::logLevel() <= muduo::Logger::DEBUG) \
   muduo::Logger(__FILE__, __LINE__, muduo::Logger::DEBUG, __func__).stream()
 #define LOG_INFO if (muduo::Logger::logLevel() <= muduo::Logger::INFO) \
@@ -130,8 +133,10 @@ inline Logger::LogLevel Logger::logLevel()
 #define LOG_WARN muduo::Logger(__FILE__, __LINE__, muduo::Logger::WARN).stream()
 #define LOG_ERROR muduo::Logger(__FILE__, __LINE__, muduo::Logger::ERROR).stream()
 #define LOG_FATAL muduo::Logger(__FILE__, __LINE__, muduo::Logger::FATAL).stream()
-#define LOG_SYSERR muduo::Logger(__FILE__, __LINE__, false).stream()
-#define LOG_SYSFATAL muduo::Logger(__FILE__, __LINE__, true).stream()
+#define LOG_SYSERR muduo::Logger(__FILE__, __LINE__, false).stream() //根据错误代码errno输出日志
+#define LOG_SYSFATAL muduo::Logger(__FILE__, __LINE__, true).stream() //true表示会退出程序，false表示不会退出程序
+//Fatal级别的错误会把程序给终止掉 
+
 
 const char* strerror_tl(int savedErrno);
 
